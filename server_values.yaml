@@ -1,0 +1,60 @@
+image:
+  tag: "9.2.1"
+
+grafana.ini:
+  database:
+    type: "postgres"
+    host: "<database_ip>:5432"
+    name: "grafana"
+    user: "grafana"
+    password: $__file{/etc/secrets/passwords/password}
+  auth.azuread:
+    name: "Azure AD"
+    enabled: true
+    allow_sign_up: true
+    client_id: "<clinet_id>"
+    client_secret: $__file{/etc/secrets/passwords/client_secret}
+    scopes: openid email profile
+    auth_url: "https://login.microsoftonline.com/<ID>/oauth2/v2.0/authorize"
+    token_url: "https://login.microsoftonline.com/<ID>/oauth2/v2.0/token"
+    allowed_domains: "<domain_name>"
+    allowed_groups: "<group_id> <group_id>"
+    role_attribute_strict: false
+  auth.basic:
+    enabled: false
+  auth:
+    disable_login_form: true
+  server:
+    domain: "<grafana_domain_name>"
+    root_url: "https://<grafana_domain_name>/"
+
+extraSecretMounts:
+  - name: grafana-passwords-mount
+    secretName: grafana-passwords
+    defaultMode: 0440
+    mountPath: /etc/secrets/passwords
+    readOnly: true
+
+plugins:
+  - alexanderzobnin-zabbix-app
+  - blackmirror1-singlestat-math-panel
+  - doitintl-bigquery-datasource
+  - goshposh-metaqueries-datasource
+  - grafana-bigquery-datasource
+  - grafana-piechart-panel
+  - grafana-worldmap-panel
+
+envFromSecrets:
+  - name: grafana-passwords
+
+envFromSecrets: []
+ingress:
+  enabled: true
+  pathType: Prefix
+  hosts:
+    - <grafana_domain_name>
+  ingressClassName: <nginx_internal_class_name>
+  tls:
+    - secretName: grafana-tls-secret
+      hosts:
+        - <grafana_domain_name> 
